@@ -5,11 +5,49 @@ typedef struct tache
 {
     float temps;
     int num;
-    int tab_exclu[10]; // a changer dynamiquement
+    int tab_exclu[10]; /// a changer dynamiquement
 }taches;
 
 
-// pb comment trouver ordre sans lire données
+
+/// test station liste chainée
+
+typedef struct station
+{
+    int sommet_station[20]; /// rendre dynamique
+    struct station* suivant;
+}stations;
+
+
+//
+stations* creer_maillon(int valeur, int i)
+{
+    stations *nouveau_maillon;
+    nouveau_maillon = (stations*) malloc(sizeof(stations));
+    nouveau_maillon->sommet_station[i] = valeur; /// a changer
+    nouveau_maillon->suivant = NULL;
+    return nouveau_maillon;
+}
+
+void afficher_liste_chainee(stations *ancre, int i) {
+    stations *actuel = ancre;
+    do {
+        printf("%d ", actuel->sommet_station[i]); /// a changer
+        actuel = actuel->suivant;
+    } while (actuel != NULL);
+    printf("\n\n");
+}
+
+void ajouter_maillon_en_fin_de_chaine(stations *ancre, stations *nouveau_maillon) {
+    stations *actuel=ancre;
+    while(actuel->suivant!=NULL)
+    {
+        actuel=actuel->suivant;
+    }
+    actuel->suivant = nouveau_maillon;
+}
+
+
 int trouver_ordre(FILE* op)
 {
     int nb_tache = 0;
@@ -42,7 +80,7 @@ void lire_graphe(FILE* ifs, taches*  t, int ordre) {
 
     int op1, op2;
 
-    // faire des tableau dynamique
+    /// faire des tableau dynamique
     int tab[100];
     int tabj[100];
 
@@ -62,10 +100,10 @@ void lire_graphe(FILE* ifs, taches*  t, int ordre) {
         compteur++;
     }
 
-
+    int n;
     // on prend un struct tache
     for (int k = 0; k < ordre; ++k) {
-        int n = 0;
+        n = 0;
         // on parcours tableau qui contient toutes le op
         for (int j = 0; j < compteur; ++j) {
             // qd op correspond a la tache
@@ -81,21 +119,43 @@ void lire_graphe(FILE* ifs, taches*  t, int ordre) {
                 n++;
             }
         }
+        for (n = n; n < 10 ; ++n) {
+            t[k].tab_exclu[n] = -1;
+        }
     }
 
+
     //test
-    int m = 8;
-    printf("%d exclu de %d", t[m].num, t[m].tab_exclu[0]);
-
-
+    for (int j = 0; j < ordre; ++j) {
+        int k=0;
+        while(t[j].tab_exclu[k] != -1)
+        {
+            printf("%d exclu de %d\n", t[j].num, t[j].tab_exclu[k]);
+            k++;
+        }
+    }
 
 }
 
 
-void exclu(taches* t, int ordre){
-    for (int i = 0; i < ordre; ++i) {
+void exclusion(taches* t, int ordre){
 
+    stations *ancre = NULL;
+    int tab_op_stations[20];
+
+    int i = 0;
+
+    for (int j = 0; j < ordre; ++j) {
+        int k=0;
+        while(t[j].tab_exclu[k] != -1)
+        {
+
+            k++;
+        }
     }
+
+    // faire welsh powell, si nouvelle couleur alors nouvelle station
+
 }
 
 int main() {
@@ -120,6 +180,11 @@ int main() {
 
     taches* tache;
     tache = (taches*)malloc(ordre*sizeof(taches));
+
+
+
+
+
 
 
     init(op, tache, ordre);
