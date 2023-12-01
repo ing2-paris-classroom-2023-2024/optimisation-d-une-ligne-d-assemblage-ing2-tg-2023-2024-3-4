@@ -163,11 +163,47 @@ void exclusion(taches* t, int ordre, Graphe* graphe) {
 
     /// on remarque juste que les sommets n'apparaissant pas dans file exclusions sont oublié, or a mettre qd meme dans stations, attention
 
-    for (int i = 0; i < ordre; ++i) {
-        printf("degre %d du sommet %d\n", graphe->t[i].degre, graphe->t[i].num);
+    int couleur = 0;
+    graphe->t[0].couleur = 0;
+
+    for (int i = 1; i < ordre; ++i) {
+        int couleur_disponible = 1;
+
+        // parcour des couleurs précédemment utilisées
+        for (int c = 0; c < i; ++c) {
+            // test si couleur précédemment utilisée crée un conflit avec ses voisins
+            int conflit = 0;
+            for (int k = 0; k < i; ++k) {
+                if (graphe->matrice_adjacence[graphe->t[i].num][graphe->t[k].num] == 1 &&
+                    graphe->t[k].couleur == c) {
+                    conflit = 1;
+                    break;
+                }
+            }
+            // si aucune violation
+            if (!conflit) {
+                // utiliser la couleur précédemment utilisée
+                graphe->t[i].couleur = c;
+                couleur_disponible = 0;
+                break;
+            }
+        }
+
+        // si aucune couleur précédemment utilisée est disponible
+        if (couleur_disponible) {
+            // attribuer une nouvelle couleur
+            graphe->t[i].couleur = couleur;
+            couleur = (couleur + 1) % ordre; // Utilisation de toutes les couleurs disponibles
+        }
     }
 
-    /// verifier si couleur est disponible ect
+
+
+    for (int i = 0; i < ordre; ++i) {
+        printf("degre %d du sommet %d et de couleur %d\n", graphe->t[i].degre, graphe->t[i].num, graphe->t[i].couleur);
+    }
+
+    /// et pour celle qui ne sont pas dans le truc exclusions leur mettre la plus petite a la fin
 
 }
 
