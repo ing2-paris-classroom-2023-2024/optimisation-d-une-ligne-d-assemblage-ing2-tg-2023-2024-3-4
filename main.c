@@ -12,22 +12,31 @@ typedef struct tache {
 typedef struct {
     int** matrice_adjacence;
     taches* t;
+    int* indices; // tableau d'indices (pour tache)
+
 } Graphe;
 
-int trouver_ordre(FILE* op) {
+int trouver_ordre(FILE* op)
+{
     int nb_tache = 0;
+
+    // juste pour faire fonctionner le while (valeur ne sont pas utilisé)
     int poubelle1;
     float poubelle2;
 
-    while (feof(op) == 0) {
+    // s'arrete quand le fichier est vide
+    while (feof(op)==0)
+    {
         fscanf(op, "%d%f", &poubelle1, &poubelle2);
-        if (feof(op) != 0)
-            break;
-        nb_tache = poubelle1 > nb_tache ? poubelle1 : nb_tache;
-    }
+        if (feof(op)!=0) break;
 
+        // compte taille du fichier
+        nb_tache++;
+    }
+    // repartir au debut du fichier operations
     rewind(op);
-    return nb_tache;
+
+    return nb_tache+1;
 }
 
 int trouver_max(FILE* op) {
@@ -53,7 +62,7 @@ int trouver_max(FILE* op) {
 void init(FILE* op, taches* t, int ordre) {
     for (int i = 0; i < ordre; ++i) {
         fscanf(op, "%d %f", &t[i].num, &t[i].temps);
-        t[i].couleur = -1;
+        t[i].couleur = 0;
         t[i].degre = 0;
     }
 }
@@ -100,8 +109,6 @@ void lire_graphe(FILE* ifs, taches* t, int ordre, Graphe* graphe) {
         compteur++;
     }
 
-    /// a revoir
-
     // on prend un struct tache
     for (int k = 0; k < ordre; ++k) {
         t[k].degre = 0;
@@ -127,12 +134,11 @@ void lire_graphe(FILE* ifs, taches* t, int ordre, Graphe* graphe) {
         }
     }
 
-
 }
 
 void init_graphe_bis(Graphe* graphe, int ordre, taches* t){
-
     graphe->t = (taches*)malloc(ordre * sizeof(taches));
+    graphe->indices = (int*)malloc(ordre * sizeof(int));
 
     for (int i = 0; i < ordre; ++i)
     {
@@ -143,6 +149,7 @@ void init_graphe_bis(Graphe* graphe, int ordre, taches* t){
         {
             graphe->t[i].tab_exclu[j] = t[i].tab_exclu[j];
         }
+        graphe->indices[i] = i; // Initialisation des indices
     }
 }
 
@@ -150,13 +157,18 @@ void exclusion(taches* t, int ordre, Graphe* graphe) {
 
     init_graphe_bis(graphe, ordre, t);
 
-    // tri pour welsh and powell
+    // tri pour welsh and powell -> dans ordre decroissant
     for (int i = 0; i < ordre - 1; ++i) {
         for (int j = i + 1; j < ordre; ++j) {
             if (graphe->t[i].degre < graphe->t[j].degre) {
                 taches temp = graphe->t[i];
                 graphe->t[i] = graphe->t[j];
                 graphe->t[j] = temp;
+
+                // Mise à jour des indices
+                int temp_index = graphe->indices[i];
+                graphe->indices[i] = graphe->indices[j];
+                graphe->indices[j] = temp_index;
             }
         }
     }
@@ -165,7 +177,7 @@ void exclusion(taches* t, int ordre, Graphe* graphe) {
 
     int couleur = 0;
     graphe->t[0].couleur = 0;
-    int couleur_max = 0;
+
 
     for (int i = 1; i < ordre; ++i) {
         int couleur_disponible = 1;
@@ -189,7 +201,7 @@ void exclusion(taches* t, int ordre, Graphe* graphe) {
                 break;
             }
         }
-        // si aucune couleur précédemment utilisée est disponible
+        // si aucune couleur précédemment utilisee est disponible
         if (couleur_disponible) {
             // attribuer une nouvelle couleur
             graphe->t[i].couleur = couleur;
@@ -197,14 +209,20 @@ void exclusion(taches* t, int ordre, Graphe* graphe) {
         }
     }
 
-    /// test bon fonctionnement
+    for (int i = 0; i < ordre; ++i) {
+        t[graphe->indices[i]].couleur = graphe->t[i].couleur;
+    }
+
+
+
+    /* test bon fonctionnement
     for (int i = 0; i < ordre; ++i) {
         printf("degre %d du sommet %d et de couleur %d\n", graphe->t[i].degre, graphe->t[i].num, graphe->t[i].couleur);
-    }
+    }*/
 
 }
 
-void tri_par_couleur(Graphe* graphe, int ordre) {
+int tri_par_couleur(Graphe* graphe, int ordre, taches* tache) {
 
     // nombre de couleurs utilisées
     int couleur_max = 0;
@@ -214,7 +232,8 @@ void tri_par_couleur(Graphe* graphe, int ordre) {
         }
     }
 
-    // affichage
+
+    /* affichage
     printf("\ntaches par couleur :\n");
     for (int i = 0; i <= couleur_max; ++i) {
         printf("Couleur %d: ", i);
@@ -225,100 +244,11 @@ void tri_par_couleur(Graphe* graphe, int ordre) {
         }
         printf("\n");
     }
+    printf("\n");*/
+
+    return couleur_max;
 }
 
-/*
-void exclusion(taches* t, int ordre, Graphe* graphe) {
-    init_graphe_bis(graphe, ordre, t);
-
-    // Sorting for Welsh and Powell
-    for (int i = 0; i < ordre - 1; ++i) {
-        for (int j = i + 1; j < ordre; ++j) {
-            if (graphe->t[i].degre < graphe->t[j].degre) {
-                taches temp = graphe->t[i];
-                graphe->t[i] = graphe->t[j];
-                graphe->t[j] = temp;
-            }
-        }
-    }
-
-    int couleur_max = 0;
-
-    // Coloring vertices
-    for (int i = 0; i < ordre; ++i) {
-        int couleur_disponible = 1;
-
-        // Check available colors
-        for (int c = 0; c < i; ++c) {
-            int conflit = 0;
-
-            // Check for conflicts with neighbors
-            for (int k = 0; k < i; ++k) {
-                if (graphe->matrice_adjacence[graphe->t[i].num][graphe->t[k].num] == 1 &&
-                    graphe->t[k].couleur == c) {
-                    conflit = 1;
-                    break;
-                }
-            }
-
-            // Assign color if no conflict
-            if (!conflit) {
-                graphe->t[i].couleur = c;
-                couleur_disponible = 0;
-                break;
-            }
-        }
-
-        // Assign a new color if no available colors
-        if (couleur_disponible) {
-            graphe->t[i].couleur = couleur_max;
-            couleur_max++;
-        }
-    }
-
-    printf("Nombre maximum de couleurs : %d\n", couleur_max);
-
-    // Arrays to store vertices of the same color
-    int** vertices_par_couleur = (int**)malloc(couleur_max * sizeof(int*));
-    for (int i = 0; i < couleur_max; ++i) {
-        vertices_par_couleur[i] = (int*)malloc(ordre * sizeof(int));
-    }
-
-    // Initialize arrays
-    for (int i = 0; i < couleur_max; ++i) {
-        for (int j = 0; j < ordre; ++j) {
-            vertices_par_couleur[i][j] = -1;
-        }
-    }
-
-    // Populate arrays with vertices of the same color
-    for (int i = 0; i < ordre; ++i) {
-        int couleur = graphe->t[i].couleur;
-        int j = 0;
-        while (vertices_par_couleur[couleur][j] != -1) {
-            j++;
-        }
-        vertices_par_couleur[couleur][j] = graphe->t[i].num;
-    }
-
-    // Print vertices for each color
-    for (int i = 0; i < couleur_max; ++i) {
-        printf("Vertices with color %d: ", i);
-        int j = 0;
-        while (vertices_par_couleur[i][j] != -1) {
-            printf("%d ", vertices_par_couleur[i][j]);
-            j++;
-        }
-        printf("\n");
-    }
-
-    // Free allocated memory
-    for (int i = 0; i < couleur_max; ++i) {
-        free(vertices_par_couleur[i]);
-    }
-    free(vertices_par_couleur);
-}
-*/
 
 int main() {
     FILE* exclu = fopen("../exclusions.txt", "r");
@@ -336,23 +266,29 @@ int main() {
     int ordre = trouver_ordre(op);
     int max = trouver_max(op);
 
+    //printf("%d et %d\n\n", ordre, max);
+
     taches* tache;
-    tache = (taches*)malloc((ordre + 1) * sizeof(taches));
+    tache = (taches*)malloc((ordre) * sizeof(taches));
 
     Graphe* graphe;
     graphe = (Graphe*)malloc(sizeof(Graphe));
+
     init(op, tache, ordre);
 
     init_graphe(graphe, max);
     lire_graphe(exclu, tache, ordre, graphe);
 
-    afficher_matrice(graphe, max);
-
+    //afficher_matrice(graphe, max);
 
     exclusion(tache, ordre, graphe);
-    tri_par_couleur(graphe, ordre);
+
+    int couleur_max = tri_par_couleur(graphe, ordre, tache);
 
 
+    for (int i = 0; i < ordre; ++i) {
+        printf("sommet %d a couleur %d\n", tache[i].num, tache[i].couleur);
+    }
 
     free(tache);
     for (int i = 0; i <= max; ++i) {
