@@ -12,6 +12,7 @@ typedef struct Arc* PointeurArc;
 struct Station {
     int sommets_station[10];
     int nb_sommet;
+    int nb_stations;
     int temps_tache;
 };
 
@@ -280,65 +281,6 @@ int tri_par_couleur(Graphe_exclu* graphe, int ordre, taches* tache) {
     return couleur_max;
 }
 
-/// mix
-
-int test_exclu(struct Station liste_station[], taches* t)
-{
-    int max = 0;
-    // max = nb de mini station
-    /// changer 30
-    for (int i = 0; i < 30; ++i) {
-        if (liste_station[i].nb_sommet > max) max = liste_station[i].nb_sommet;
-        else max = max;
-    }
-
-    // test pour toutes les mini stations donc tant que != 0
-
-    for (int s = 0; s < max; ++s)
-    {
-        /// remplir dans [] le nb max de sommet dans la station -> soit creer une nouvelle valeur dans station soit jsp
-        for (int i = 0; i < liste_station[s].sommets_station[] - 1; ++i){
-            for (int j = i + 1; j < liste_station[s].sommets_station[]; ++j)
-            {
-                if (t[liste_station[s].sommets_station[i]].couleur != t[liste_station[s].sommets_station[j]].couleur) return 1;
-            }
-        }
-    }
-    return 0;
-}
-
-int* tab_exclu(struct Station liste_station[], taches* tache) {
-
-    // voir si possible de faire tableau dynamique
-    int tableau[10];
-    int t = 0;
-
-    int max = 0;
-    // max = nb de mini station
-    /// changer 30
-    for (int i = 0; i < 30; ++i) {
-        if (liste_station[i].nb_sommet > max) max = liste_station[i].nb_sommet;
-        else max = max;
-    }
-
-
-    for (int s = 0; s < max; ++s)
-    {
-        /// remplir dans [] le nb max de sommet dans la station -> soit creer une nouvelle valeur dans station soit jsp
-        for (int i = 0; i < liste_station[s].sommets_station[] - 1; ++i){
-            for (int j = i + 1; j < liste_station[s].sommets_station[]; ++j)
-            {
-                if (tache[liste_station[s].sommets_station[i]].couleur != tache[liste_station[s].sommets_station[j]].couleur)
-                {
-                    tableau[t] = tache[liste_station[s].sommets_station[j]].num;
-                    t++;
-                }
-            }
-        }
-    }
-
-    return tableau;
-}
 
 /// precedance
 
@@ -379,7 +321,7 @@ void TrouverSommetsSources(Graphe* graphe, int* sources, int* nb_sources) {
     }
 }
 
-void BFS(Graphe* graphe, int* sources, int nb_sources, struct Station liste_station[]) {
+void BFS(Graphe* graphe, int* sources, int nb_sources, int* nb_stations ,struct Station liste_station[]) {
     int* visite = (int*)malloc(graphe->ordre * sizeof(int));
 
     for (int i = 0; i < graphe->ordre; i++) {
@@ -431,9 +373,12 @@ void BFS(Graphe* graphe, int* sources, int nb_sources, struct Station liste_stat
 
         nombre_stations++; // Incrémentation du nombre de stations
         printf("\n");
+
+        *nb_stations = nombre_stations;
     }
 
     printf("Nombre total de stations : %d\n", nombre_stations);
+    liste_station[0].nb_stations = nombre_stations;
 
     free(visite);
     free(file);
@@ -460,6 +405,182 @@ void GrandeStation(struct Station stations[], EnsembleStations* G_station) {
     }
 }
 
+
+/// mix
+
+void ajouterStation(struct Station **stations, int *nb_station, int position) {
+    // Vérifier si la position est valide
+    position=position-1;
+    if (position > *nb_station) {
+        printf("Position invalide. L'élément ne sera pas ajouté.\n");
+        return;
+    }
+
+    // Augmenter la taille du tableau
+    (*nb_station)++;
+
+    // Réallouer la mémoire pour le tableau avec une taille plus grande
+    *stations = realloc(*stations, (*nb_station) * sizeof(struct Station));
+
+    // Décaler les éléments du tableau pour faire de la place à la nouvelle station
+    for (int i = *nb_station - 1; i >= position; --i) {
+        (*stations)[i] = (*stations)[i - 1];
+    }
+
+    // Ajouter la nouvelle station à la position spécifiée
+    (*stations)[position].nb_sommet = 0;
+
+}
+
+void ajout_sommet_station(struct Station **stations, int sommet, int position) {
+    position=position-1;
+
+    (*stations)[position].sommets_station[(*stations)[position].nb_sommet] = sommet;
+    (*stations)[position].nb_sommet = (*stations)[position].nb_sommet + 1;
+
+}
+
+
+void sup_sommet_station(struct Station **stations, int position, int indice){
+    position=position-1;
+    (*stations)[position].sommets_station[indice]=-1;
+};
+
+
+int test_exclu(struct Station liste_station[], taches* t, int ordre)
+{
+    // max = nb de mini station
+    int max = liste_station[0].nb_stations;
+    //printf("%d", max);
+    int sommet;
+
+    // test pour toutes les mini stations donc tant que != 0
+    for (int s = 0; s < max; ++s)
+    {
+        /// remplir dans [] le nb max de sommet dans la station
+        for (int i = 0; i < liste_station[s].nb_sommet; ++i)
+        {
+
+            for (int a = 0; a < ordre; ++a) {
+                if (t[a].num == liste_station[s].sommets_station[i]) sommet = a;
+            }
+
+            //printf("%d\n", liste_station[s].sommets_station[i]);
+            //printf("%d\n", t[sommet].degre);
+
+            for (int k = 0; k < t[sommet].degre; ++k)
+            {
+                printf("%d et %d \n",t[sommet].tab_exclu[k], liste_station[s].sommets_station[i]);
+                if(t[sommet].tab_exclu[k] == liste_station[s].sommets_station[i+1])
+                {
+                    return 1;
+                }
+
+            }
+            printf("\n");
+        }
+    }
+    return 0;
+}
+
+int indice_exclu(struct Station liste_station[], taches* t, int ordre)
+{
+    // max = nb de mini station
+    int max = liste_station[0].nb_stations;
+    //printf("%d", max);
+    int sommet;
+
+    // test pour toutes les mini stations donc tant que != 0
+    for (int s = 0; s < max; ++s)
+    {
+        /// remplir dans [] le nb max de sommet dans la station
+        for (int i = 0; i < liste_station[s].nb_sommet; ++i)
+        {
+
+            for (int a = 0; a < ordre; ++a) {
+                if (t[a].num == liste_station[s].sommets_station[i]) sommet = a;
+            }
+
+            for (int k = 0; k < t[sommet].degre; ++k)
+            {
+                if(t[sommet].tab_exclu[k] == liste_station[s].sommets_station[i+1])
+                {
+                    return s+1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+int tab_exclu(struct Station liste_station[], taches* t, int ordre) {
+
+    // voir si possible de faire tableau dynamique
+
+    int p = 0;
+    int sommet;
+
+    int max = liste_station[0].nb_stations;
+
+    for (int s = 0; s < max; ++s)
+    {
+        /// remplir dans [] le nb max de sommet dans la station
+        for (int i = 0; i < liste_station[s].nb_sommet; ++i)
+        {
+
+            for (int a = 0; a < ordre; ++a) {
+                if (t[a].num == liste_station[s].sommets_station[i]) sommet = a;
+            }
+
+            for (int k = 0; k < t[sommet].degre; ++k)
+            {
+                if(t[sommet].tab_exclu[k] == liste_station[s].sommets_station[i+1])
+                {
+                    p = t[sommet].tab_exclu[k];
+                    printf("%d sommet exclu\n", p);
+                    return p;
+
+                }
+            }
+        }
+    }
+
+}
+
+void appliquer_exclusion(struct Station liste_station[], taches* t, int ordre,int *nb_station)
+{
+    if(test_exclu(liste_station, t, ordre)==1)
+    {
+        /// creer nouvel espace -> nouvelle mini station
+        printf("indice %d", indice_exclu(liste_station, t, ordre));
+        ajouterStation(&liste_station, nb_station, indice_exclu(liste_station, t, ordre));
+
+        /// rajouter tableau -> sommet_station grace a tab_exclu
+
+        printf("\n\n");
+
+        int excluu = tab_exclu(liste_station, t, ordre);
+
+        ajout_sommet_station (&liste_station, excluu, indice_exclu(liste_station, t, ordre));
+
+
+        printf("\n");
+        printf("Stations apres ajout :\n");
+        printf("\n");
+        for (int i = 0; i < liste_station[0].nb_stations; i++) {
+            printf("Station %d : ", i + 1);
+
+            for (int j = 0; j < liste_station[i].nb_sommet; j++) {
+                if (liste_station[i].sommets_station[j]!=0){
+                    printf("%d ", liste_station[i].sommets_station[j]);
+                }
+            }
+
+            printf("\n");
+        }
+
+    }
+}
 
 
 
