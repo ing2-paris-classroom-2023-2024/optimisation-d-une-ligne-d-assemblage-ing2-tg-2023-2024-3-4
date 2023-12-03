@@ -444,7 +444,7 @@ void ajout_sommet_station(struct Station **stations, int sommet, int position) {
 void sup_sommet_station(struct Station **stations, int position, int indice){
     position=position-1;
     (*stations)[position].sommets_station[indice]=-1;
-};
+}
 
 
 int test_exclu(struct Station liste_station[], taches* t, int ordre)
@@ -470,14 +470,14 @@ int test_exclu(struct Station liste_station[], taches* t, int ordre)
 
             for (int k = 0; k < t[sommet].degre; ++k)
             {
-                printf("%d et %d \n",t[sommet].tab_exclu[k], liste_station[s].sommets_station[i]);
+                //printf("%d et %d \n",t[sommet].tab_exclu[k], liste_station[s].sommets_station[i]);
                 if(t[sommet].tab_exclu[k] == liste_station[s].sommets_station[i+1])
                 {
                     return 1;
                 }
 
             }
-            printf("\n");
+            //printf("\n");
         }
     }
     return 0;
@@ -505,7 +505,7 @@ int indice_exclu(struct Station liste_station[], taches* t, int ordre)
             {
                 if(t[sommet].tab_exclu[k] == liste_station[s].sommets_station[i+1])
                 {
-                    return s+1;
+                    return s+2;
                 }
             }
         }
@@ -537,29 +537,60 @@ int tab_exclu(struct Station liste_station[], taches* t, int ordre) {
                 if(t[sommet].tab_exclu[k] == liste_station[s].sommets_station[i+1])
                 {
                     p = t[sommet].tab_exclu[k];
-                    printf("%d sommet exclu\n", p);
                     return p;
 
                 }
             }
         }
     }
-
 }
+
+int pos_exclu(struct Station liste_station[], taches* t, int ordre) {
+
+    // voir si possible de faire tableau dynamique
+
+    int sommet;
+
+    int max = liste_station[0].nb_stations;
+
+    for (int s = 0; s < max; ++s)
+    {
+        /// remplir dans [] le nb max de sommet dans la station
+        for (int i = 0; i < liste_station[s].nb_sommet; ++i)
+        {
+
+            for (int a = 0; a < ordre; ++a) {
+                if (t[a].num == liste_station[s].sommets_station[i]) sommet = a;
+            }
+
+            for (int k = 0; k < t[sommet].degre; ++k)
+            {
+                if(t[sommet].tab_exclu[k] == liste_station[s].sommets_station[i+1])
+                {
+                    int pos;
+                    pos = i+1;
+
+                    return pos;
+                }
+            }
+        }
+    }
+}
+
 
 void appliquer_exclusion(struct Station liste_station[], taches* t, int ordre,int *nb_station)
 {
-    if(test_exclu(liste_station, t, ordre)==1)
+    while(test_exclu(liste_station, t, ordre)==1)
     {
-        /// creer nouvel espace -> nouvelle mini station
-        printf("indice %d", indice_exclu(liste_station, t, ordre));
+
+        printf("\nindice %d\n", indice_exclu(liste_station, t, ordre));
+
+        // creer nouvelle mini station a un indice
         ajouterStation(&liste_station, nb_station, indice_exclu(liste_station, t, ordre));
 
-        /// rajouter tableau -> sommet_station grace a tab_exclu
-
-        printf("\n\n");
 
         int excluu = tab_exclu(liste_station, t, ordre);
+        printf("%d sommet exclu\n", excluu);
 
         ajout_sommet_station (&liste_station, excluu, indice_exclu(liste_station, t, ordre));
 
@@ -575,13 +606,10 @@ void appliquer_exclusion(struct Station liste_station[], taches* t, int ordre,in
                     printf("%d ", liste_station[i].sommets_station[j]);
                 }
             }
-
             printf("\n");
         }
-
     }
 }
-
 
 
 
